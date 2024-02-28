@@ -1,0 +1,19 @@
+.Room-container{
+    height: 100%;
+    width: 50%;
+}
+
+.Room-bottom{
+    height: 100%;
+    display: flex;
+    flex-direction: column-reverse;
+    align-items: flex-start;
+    gap: 16px;
+    vertical-align: bottom;
+}
+
+.Room-user-message-form{
+    display: flex;
+    gap: 5px;
+    width: 100%;
+}

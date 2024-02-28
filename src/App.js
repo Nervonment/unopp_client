@@ -1,10 +1,18 @@
-import { Button } from 'antd';
-import './App.css';
+import { Route, BrowserRouter as Router, Routes } from 'react-router-dom';
+import Start from './Start';
+import Room from './Room';
+import './App.css'
+
 
 function App() {
   return (
     <div className="App">
-      <Button>Click me!</Button>
+      <Router >
+        <Routes>
+          <Route path="/" element={<Start />} />
+          <Route path="/room" element={<Room />} />
+        </Routes>
+      </Router>
     </div>
   );
 }

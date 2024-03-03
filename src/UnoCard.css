@@ -1,0 +1,15 @@
+.UnoCard-img-container{
+    position: relative;
+}
+
+.UnoCard-img-border{
+    border-width: 2px;
+    border-color: #232323;
+    border-style: solid;
+    border-radius: 10px;
+    padding: 0;
+    width: 58px;
+    height: 88px;
+    position: absolute;
+    top: 0;
+}

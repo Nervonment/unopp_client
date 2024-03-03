@@ -1,22 +1,108 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@100..900&display=swap');
+
+@font-face {
+    font-family: 'harmony';
+    src: url('../public/assets/fonts/HarmonyOS_Sans_SC_Regular.ttf');
+    font-weight: normal;
+    font-style: normal;
+}
+
 .App {
     width: 100%;
     height: 100%;
-    background-color: #f0f2f5;
-    padding: 20px;
+    background-color: var(--black2);
+    padding: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
+    color: white;
+    font-family: 'harmony', sans-serif;
 }
 
 html,
 body {
     width: 100%;
     height: 100%;
+    overflow: hidden;
 }
 
 #root {
     width: 100%;
     height: 100%;
+}
+
+:root {
+    --theme: #f92667;
+    --theme-dark: rgb(186, 27, 88);
+    --black1: #111111;
+    --black2: #1b1b1b;
+    --black3: #222222;
+    --black-border: #3a3a3a
+}
+
+.label {
+    padding: 10px;
+    font-size: large;
+    font-weight: bold;
+    color: var(--theme);
+}
+
+.button-primary {
+    background-color: var(--theme);
+    border: none;
+    padding: 8px 16px;
+    height: 40px;
+    color: white;
+    border-radius: 20px;
+}
+
+.button-primary:hover {
+    background-color: var(--theme-dark);
+    cursor: pointer;
+    transition: all;
+    transition-duration: 0.2s;
+}
+
+.button-normal {
+    background-color: var(--black3);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    height: 40px;
+    border-radius: 20px;
+}
+
+.button-normal:hover {
+    background-color: var(--black2);
+    cursor: pointer;
+    transition: all;
+    transition-duration: 0.2s;
+}
+
+
+.input1 {
+    color: white;
+    background-color: var(--black3);
+    padding: 8px 16px;
+    height: 40px;
+    border: 1px var(--black-border) solid;
+    border-radius: 20px;
+    box-sizing: border-box;
+    outline: none;
+    transition-duration: 0.2s;
+}
+
+.input1:hover {
+    background-color: var(--black2);
+}
+
+.input1:focus {
+    background-color: var(--black2);
+}
+
+a{
+    text-decoration: none;
+    color: var(--theme);
 }
 
 /* CSS reset */

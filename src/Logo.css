@@ -1,0 +1,16 @@
+.Logo {
+    background-color: var(--theme);
+    font-family: 'Josefin Sans', sans-serif;
+    padding: 24px;
+    border-radius: 36px;
+}
+
+.Logo-logo {
+    font-size: 48px;
+    color: var(--black2);
+}
+
+.Logo-sublogo {
+    color: white;
+    font-size: 24px;
+}

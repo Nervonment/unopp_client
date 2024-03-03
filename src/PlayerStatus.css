@@ -1,0 +1,34 @@
+.PlayerStatus {
+    padding: 1px;
+    padding-left: 28px;
+    padding-right: 60px;
+    display: flex;
+    height: 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.PlayerStatus-name {
+    font-size: 18px;
+}
+
+.PlayerStatus-selfhint {
+    color: gray;
+}
+
+.PlayerStatus-offline {
+    color: #fc9867;
+}
+
+.PlayerStatus-count-container {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.PlayerStatus-count {
+    color: gray;
+    font-weight: bold;
+    width: 24px;
+}

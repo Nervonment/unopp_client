@@ -1,0 +1,18 @@
+.UnoCardPool {
+    width: 80%;
+    height: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.UnoCardPool-cards-container {
+    position: relative;
+    width: 800px;
+    height: 600px;
+}
+
+.UnoCardPool-card {
+    position: absolute;
+    display: inline-block;
+}

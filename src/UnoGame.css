@@ -67,6 +67,7 @@
     padding: 20px;
     display: flex;
     gap: 20px;
+    width: max-content;
 }
 
 .UnoGame-lefttop-info {

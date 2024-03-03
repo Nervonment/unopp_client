@@ -430,11 +430,6 @@ function Room() {
         </div>
       </div>
 
-
-      <div className='Room-instruction'>
-        <Instruction />
-      </div>
-
       <div className='Room-game-container'>
         {
           gameStarted ?
@@ -451,6 +446,10 @@ function Room() {
             />
             : <UnoGameResult winner={winner} />
         }
+      </div>
+
+      <div className='Room-instruction'>
+        <Instruction />
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import { Button, Input, Modal, message } from 'antd';
+import { Button, Input, Modal, Popover, message } from 'antd';
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { server, port } from './config';
@@ -9,6 +9,12 @@ import PlayerStatus from './PlayerStatus';
 import UnoGameResult from './UnoGameResult';
 import Logo from './Logo';
 import Instruction from './Instruction';
+
+const stickersIdx = [
+  "1", "2", "3", "4", "5", "6", "7", "8", "9",
+  "10", "11", "12", "13", "14", "15", "16", "17", "18",
+  "19", "20", "21", "22", "23", "24"
+];
 
 function Room() {
   const [nameInputOpen, setNameInputOpen] = useState(true);
@@ -21,6 +27,8 @@ function Room() {
   const [userMessage, setUserMessage] = useState("");
   const [chatMessages, setChatMessages] = useState([]);
   const chatMessagesRef = useRef([]);
+
+  const [stickerPopOpen, setStickerPopOpen] = useState(false);
 
   const [cardPool, setCardPool] = useState([]);
   const cardPoolRef = useRef([]);
@@ -215,6 +223,20 @@ function Room() {
     }
   };
 
+  const handleUserSendSticker = (stickerIdx) => {
+    const roomId = searchParams.get("id");
+    let socket = socketRef.current;
+    socket.send(JSON.stringify({
+      "message_type": "SEND_MESSAGE",
+      "message": {
+        "type": "sticker",
+        "room_id": parseInt(roomId),
+        "user_name": userName,
+        "sticker": stickerIdx
+      }
+    }));
+  };
+
   const handlePrepare = (prepared) => {
     setPrepared(prepared);
 
@@ -350,7 +372,36 @@ function Room() {
 
         <div className="Room-chat-container">
           <div className='Room-user-message-form'>
-            <Input size='large' value={userMessage} onChange={(e) => setUserMessage(e.target.value)} placeholder="输入消息..." />
+            <Input size='large' value={userMessage}
+              onChange={(e) => setUserMessage(e.target.value)}
+              onPressEnter={handleUserSendMessage}
+              placeholder="输入消息..." />
+
+            <Popover content={
+              <div className='Room-chat-stickers-container'>
+                <div className='Room-chat-stickers'>
+                  {
+                    stickersIdx.map((value, key) => (
+                      <div className='Room-char-stickers-sticker' key={key}>
+                        <button className='Room-char-stickers-button'
+                          onClick={() => { handleUserSendSticker(value); setStickerPopOpen(false); }}
+                        />
+                        <img width={80} height={80} src={`assets/stickers/${value}.png`} alt={`表情${value}`} />
+                      </div>
+                    ))
+                  }
+                </div>
+              </div>
+            }
+              title="表情"
+              open={stickerPopOpen}
+              onOpenChange={(v) => setStickerPopOpen(v)}
+            >
+              <Button size='large'>
+                <svg t="1709468713553" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="4286" width="24" height="24"><path d="M512 64C264.576 64 64 264.576 64 512s200.576 448 448 448 448-200.576 448-448S759.424 64 512 64z m0 832C299.936 896 128 724.064 128 512S299.936 128 512 128s384 171.936 384 384-171.936 384-384 384z" p-id="4287" fill="#ffffff"></path><path d="M320 384m-64 0a64 64 0 1 0 128 0 64 64 0 1 0-128 0Z" p-id="4288" fill="#ffffff"></path><path d="M704 384m-64 0a64 64 0 1 0 128 0 64 64 0 1 0-128 0Z" p-id="4289" fill="#ffffff"></path><path d="M224 512c0 159.072 128.928 288 288 288s288-128.928 288-288H224z" p-id="4290" fill="#ffffff"></path></svg>
+              </Button>
+            </Popover>
+
             <Button size='large' type='primary' onClick={handleUserSendMessage}>
               <svg t="1709391356273" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="4384" width="24" height="24"><path d="M865.28 202.5472c-17.1008-15.2576-41.0624-19.6608-62.5664-11.5712L177.7664 427.1104c-23.2448 8.8064-38.5024 29.696-39.6288 54.5792-1.1264 24.8832 11.9808 47.104 34.4064 58.0608l97.5872 47.7184c4.5056 2.2528 8.0896 6.0416 9.9328 10.6496l65.4336 161.1776c7.7824 19.1488 24.4736 32.9728 44.7488 37.0688 20.2752 4.096 41.0624-2.1504 55.6032-16.7936l36.352-36.352c6.4512-6.4512 16.5888-7.8848 24.576-3.3792l156.5696 88.8832c9.4208 5.3248 19.8656 8.0896 30.3104 8.0896 8.192 0 16.4864-1.6384 24.2688-5.0176 17.8176-7.68 30.72-22.8352 35.4304-41.6768l130.7648-527.1552c5.5296-22.016-1.7408-45.2608-18.8416-60.416z m-20.8896 50.7904L713.5232 780.4928c-1.536 6.2464-5.8368 11.3664-11.776 13.9264s-12.5952 2.1504-18.2272-1.024L526.9504 704.512c-9.4208-5.3248-19.8656-7.9872-30.208-7.9872-15.9744 0-31.744 6.144-43.52 17.92l-36.352 36.352c-3.8912 3.8912-8.9088 5.9392-14.2336 6.0416l55.6032-152.1664c0.512-1.3312 1.2288-2.56 2.2528-3.6864l240.3328-246.1696c8.2944-8.4992-2.048-21.9136-12.3904-16.0768L301.6704 559.8208c-4.096-3.584-8.704-6.656-13.6192-9.1136L190.464 502.9888c-11.264-5.5296-11.5712-16.1792-11.4688-19.3536 0.1024-3.1744 1.536-13.824 13.2096-18.2272L817.152 229.2736c10.4448-3.9936 18.0224 1.3312 20.8896 3.8912 2.8672 2.4576 9.0112 9.3184 6.3488 20.1728z" p-id="4385" fill="#ffffff"></path></svg>
             </Button>
@@ -368,6 +419,8 @@ function Room() {
                   userName={value["user_name"]}
                   message={value["content"]}
                   isSelf={value["user_name"] === userName}
+                  isSticker={value["type"] === "sticker"}
+                  stickerIdx={value["sticker"]}
                   isSystem={false}
                 />
             ))

@@ -33,8 +33,8 @@ function UnoCardPool({ cards }) {
                 key={key}
                 className='UnoCardPool-card'
                 style={{
-                  top: `${coords[key][0]}px`,
-                  left: `${coords[key][1]}px`,
+                  top: `${coords[key % coords.length][0]}px`,
+                  left: `${coords[key % coords.length][1]}px`,
                   transform: `rotate(${coords[key][2]}deg)`
                 }}
               >

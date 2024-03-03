@@ -13,7 +13,7 @@
     border-right: 1px var(--black-border) solid;
 }
 
-.Room-logo-container{
+.Room-logo-container {
     background-color: var(--theme);
 }
 
@@ -116,10 +116,39 @@
     background-color: var(--black1);
 }
 
-.Room-suspect-button{
+.Room-suspect-button {
     padding-left: 6px;
     background-color: transparent;
     border: none;
     cursor: pointer;
     color: var(--theme);
+}
+
+.Room-chat-stickers-container{
+    overflow: hidden;
+    width: 360px;
+}
+
+.Room-chat-stickers {
+    display: grid;
+    grid-template-columns: repeat(4, 90px);
+    max-height: 240px;
+    width: 380px;
+    overflow-y: scroll;
+    overflow-x: hidden;
+}
+
+.Room-char-stickers-sticker{
+    position: relative;
+}
+
+.Room-char-stickers-button{
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 80px;
+    height: 80px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
 }

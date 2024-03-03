@@ -8,6 +8,7 @@ import UnoGame from './UnoGame';
 import PlayerStatus from './PlayerStatus';
 import UnoGameResult from './UnoGameResult';
 import Logo from './Logo';
+import Instruction from './Instruction';
 
 function Room() {
   const [nameInputOpen, setNameInputOpen] = useState(true);
@@ -374,6 +375,11 @@ function Room() {
           </div>
           <div className='label Room-chat-label'>聊天</div>
         </div>
+      </div>
+
+
+      <div className='Room-instruction'>
+        <Instruction />
       </div>
 
       <div className='Room-game-container'>

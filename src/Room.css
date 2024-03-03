@@ -105,6 +105,12 @@
     border-top: 1px var(--black-border) solid;
 }
 
+.Room-instruction {
+    position: absolute;
+    right: 20px;
+    top: 20px;
+}
+
 .Room-game-container {
     width: 100%;
     background-color: var(--black1);

@@ -1,9 +1,10 @@
-import { Button, Input, InputNumber, Modal, Space, message } from 'antd';
+import { Button, Input, InputNumber, Modal, Space, Tour, message } from 'antd';
 import './Start.css';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { server, port } from './config';
 import Logo from './Logo';
+import Instruction from './Instruction';
 
 
 function Start() {
@@ -91,9 +92,13 @@ function Start() {
   }
 
 
+
+
   return (
     <div className="Start">
       <div className='Start-form-container'>
+
+
         <Logo />
 
         {/* <Input id='Start-name-input' size="large" variant="filled" placeholder="你的名字" /> */}
@@ -128,7 +133,7 @@ function Start() {
       </div>
 
       <div className='Start-author'>
-        <span>Made by <a  href='https://space.bilibili.com/401603096' target='_blank' rel='noreferrer'>Nervonment</a></span>
+        <span>Made by <a href='https://space.bilibili.com/401603096' target='_blank' rel='noreferrer'>Nervonment</a></span>
       </div>
     </div>
   );

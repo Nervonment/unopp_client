@@ -1,10 +1,11 @@
-import { Button, Input, InputNumber, Modal, Space, Tour, message } from 'antd';
+import { Button, Input, InputNumber, Modal, Space, message } from 'antd';
 import './Start.css';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { server, port } from './config';
+import { httpPort, server, themeColor, wsPort } from './config';
 import Logo from './Logo';
-import Instruction from './Instruction';
+import { get, getId, getSessdata, getUserName } from './utils';
+import { LoadingOutlined } from '@ant-design/icons';
 
 
 function Start() {
@@ -16,17 +17,21 @@ function Start() {
 
   const navigate = useNavigate();
 
+  const [messageApi, contextHolder] = message.useMessage();
+
   const socketRef = useRef(null);
 
   useEffect(() => {
-    socketRef.current = new WebSocket(`ws://${server}:${port}`);
+    socketRef.current = new WebSocket(`ws://${server}:${wsPort}`);
     let socket = socketRef.current;
 
     socket.addEventListener(
       "open",
       (event) => {
-        socket.send("Hello, Server!");
-        //console.log("Connected to server.")
+        socket.send(JSON.stringify({
+          "message_type": "AUTHORIZE",
+          "sessdata": getSessdata()
+        }));
       }
     );
 
@@ -36,7 +41,18 @@ function Start() {
         //console.log("Message from server: ", event.data);
         const data = JSON.parse(event.data);
 
-        if (data["message_type"] === "CREATE_ROOM_RES") {
+        if (data["message_type"] === "AUTHORIZE_RES") {
+          if (!data["success"]) {
+            messageApi.open({
+              type: 'warning',
+              content: '请登录',
+            });
+            setTimeout(() => {
+              navigate("/login");
+            }, 2000);
+          }
+        }
+        else if (data["message_type"] === "CREATE_ROOM_RES") {
           if (data["success"]) {
             //console.log(`Welcome to room ${parseInt(roomIdRef.current)}.`);
             navigate(`/room?id=${parseInt(roomIdRef.current)}`);
@@ -45,6 +61,12 @@ function Start() {
             alert(data["info"]);
             setCreateRoomConfirmLoading(false);
           }
+        }
+        else if (data["message_type"] === "PLEASE_LOG_IN") {
+          messageApi.open({
+            type: 'warning',
+            content: '请登录',
+          })
         }
       }
     )
@@ -79,7 +101,6 @@ function Start() {
     }
   };
 
-  const [messageApi, contextHolder] = message.useMessage();
 
   const handleJoinRoom = () => {
     if (joinRoomId === null || joinRoomId === "")
@@ -91,17 +112,90 @@ function Start() {
       navigate(`/room?id=${parseInt(joinRoomId)}`);
   }
 
+  const [avatarURL, setAvatarURL] = useState("");
 
+  const getAvatar = () => {
+    get("/icon", { "id": getId() }, false)
+      .then((response) => {
+        response.blob().then(
+          (blob) => {
+            let reader = new FileReader();
+            reader.addEventListener('load', () => setAvatarURL(reader.result));
+            reader.readAsDataURL(blob);
+          }
+        );
+      })
+      .catch((e) => { console.log(e); });
+  }
 
+  useEffect(() => {
+    getAvatar();
+  }, []);
+
+  const uploadDefaultAvatar = () => {
+    // 上传默认头像
+    let canvas = document.createElement('canvas');
+    let context = canvas.getContext('2d');
+    canvas.width = 128;
+    canvas.height = 128;
+    context.font = '48px sans-serif';
+    context.fillStyle = "white";
+    context.fillRect(0, 0, 128, 128);
+    context.fillStyle = themeColor;
+    context.textAlign = "center";
+    context.fillText(getUserName().substring(0, 2), 64, 80);
+
+    canvas.toBlob(
+      (blob) => {
+        const data = new FormData();
+        data.append('file', blob);
+        fetch("http://" + server + ":" + httpPort + "/upload-icon", {
+          method: "POST",
+          body: data,
+          credentials: "include",
+          mode: "cors",
+        })
+          .then((response) => {
+            response.text().then(
+              (text) => {
+                if (text !== "SUCCESS")
+                  messageApi.open({
+                    type: 'error',
+                    content: '创建默认头像失败',
+                  });
+                getAvatar();
+              }
+            )
+          })
+          .catch((e) => { console.log(e); });
+      }
+    );
+  }
 
   return (
     <div className="Start">
-      <div className='Start-form-container'>
+      <div className='Start-avatar'>
+        <span>{getUserName()}</span>
 
+        {
+          avatarURL ?
+            <img
+              src={avatarURL}
+              width={"48px"}
+              height={"48px"}
+              alt='user settings'
+              style={{ borderRadius: "24px" }}
+              onError={uploadDefaultAvatar}
+            /> :
+            <LoadingOutlined />
+        }
+        <button className='Start-avatar-button' onClick={() => navigate("/me")}></button>
+      </div>
+
+      <div className='Start-form-container'>
 
         <Logo />
 
-        {/* <Input id='Start-name-input' size="large" variant="filled" placeholder="你的名字" /> */}
         {contextHolder}
         <Button size='large' type='primary' onClick={() => setCreateRoomOpen(true)}>创建房间</Button>
         <Modal

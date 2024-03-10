@@ -1,0 +1,14 @@
+.Login {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    height: 100%;
+    width: max-content;
+    gap: 14px;
+}
+
+.Login-hint{
+    width: 100%;
+    text-align: center;
+    color: gray;
+}

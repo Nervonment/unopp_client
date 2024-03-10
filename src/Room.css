@@ -116,13 +116,16 @@
     background-color: var(--black1);
 }
 
-.Room-suspect-button {
+/* .Room-suspect-button {
     padding-left: 6px;
     background-color: transparent;
     border: none;
     cursor: pointer;
-    color: var(--theme);
-}
+    color: white;
+    text-decoration: underline;
+    font-size: large;
+    font-weight: bold;
+} */
 
 .Room-chat-stickers-container{
     overflow: hidden;

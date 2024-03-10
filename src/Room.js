@@ -1,7 +1,7 @@
 import { Button, Input, Modal, Popover, message } from 'antd';
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { server, port } from './config';
+import { server, wsPort } from './config';
 import './Room.css';
 import ChatMessage from './ChatMessage';
 import UnoGame from './UnoGame';
@@ -9,7 +9,9 @@ import PlayerStatus from './PlayerStatus';
 import UnoGameResult from './UnoGameResult';
 import Logo from './Logo';
 import Instruction from './Instruction';
+import { get, getSessdata, getUserName } from './utils';
 
+// 硬编码所有的表情
 const stickersIdx = [
   "1", "2", "3", "4", "5", "6", "7", "8", "9",
   "10", "11", "12", "13", "14", "15", "16", "17", "18",
@@ -41,20 +43,56 @@ function Room() {
   const [gameInfo, setGameInfo] = useState(null);
   const [gameStarted, setGameStarted] = useState(false);
   const [winner, setWinner] = useState(null);
+  const [gameResult, setGameResult] = useState(null);
+
+  const [hint, setHint] = useState("");
+  const [options, setOptions] = useState("");
+
+  const [avatarsURL, setAvatarsURL] = useState({});
+  const avatarsURLRef = useRef({});
 
   const socketRef = useRef(null);
 
   useEffect(() => {
-    socketRef.current = new WebSocket(`ws://${server}:${port}`);
+    socketRef.current = new WebSocket(`ws://${server}:${wsPort}`);
 
     let socket = socketRef.current;
+
+    socket.addEventListener(
+      "open",
+      (event) => {
+        socket.send(JSON.stringify({
+          "message_type": "AUTHORIZE",
+          "sessdata": getSessdata()
+        }));
+      }
+    );
+
     socket.addEventListener(
       "message",
       (event) => {
-        //console.log("Message from server: ", event.data);
         const data = JSON.parse(event.data);
 
-        if (data["message_type"] === "JOIN_ROOM_RES") {
+        if (data["message_type"] === "AUTHORIZE_RES") {
+          if (data["success"]) {
+            setUserName(data["user_name"]);
+            userNameRef.current = data["user_name"];
+          }
+          else {
+            messageApi.open({
+              type: 'warning',
+              content: '请登录',
+            });
+            setTimeout(() => {
+              navigate("/login");
+            }, 2000);
+          }
+        }
+        else if (data["message_type"] === "ERROR") {
+          alert(data["info"]);
+          setNameInputConfirmLoading(false);
+        }
+        else if (data["message_type"] === "JOIN_ROOM_RES") {
           if (data["success"]) {
             setNameInputOpen(false);
           }
@@ -63,17 +101,44 @@ function Room() {
           }
           setNameInputConfirmLoading(false);
         }
-        else if (data["message_type"] === "NEW_USER_MESSAGE") {
+        else if (data["message_type"] === "CHAT_MESSAGE") {
           chatMessagesRef.current.unshift(data["message"]);
           setChatMessages(chatMessagesRef.current.slice());
         }
         else if (data["message_type"] === "SEND_MESSAGE_RES") {
           alert("已与房间断开连接，请重新加入");
         }
+        else if (data["message_type"] === "PLEASE_LOG_IN") {
+          messageApi.open({
+            type: 'warning',
+            content: '请登录',
+          });
+        }
 
         else if (data["message_type"] === "ROOM_MEMBERS_INFO") {
           setRoomMembers(data["members"]);
+
+          // 加载新加入用户的头像
+          for (let member of data["members"])
+            if (!(member["name"] in avatarsURLRef.current)) {
+              get("/icon", { "user_name": member["name"] }, false)
+                .then((response) => {
+                  response.blob().then(
+                    (blob) => {
+                      let reader = new FileReader();
+                      reader.addEventListener('load', () => {
+                        avatarsURLRef.current[member["name"]] = reader.result;
+                        console.log(avatarsURLRef.current);
+                        setAvatarsURL(Object.assign({}, avatarsURLRef.current));
+                      });
+                      reader.readAsDataURL(blob);
+                    }
+                  );
+                })
+                .catch((e) => console.log(e));
+            }
         }
+
         else if (data["message_type"] === "UNO_START") {
         }
         else if (data["message_type"] === "UNO_CARDS_IN_HAND") {
@@ -81,8 +146,8 @@ function Room() {
         }
         else if (data["message_type"] === "UNO_GAME_INFO") {
           setGameInfo(data);
+          setHint(data["next_player"] === getUserName() ? "到你了" : "");
           setGameStarted(true);
-          // setRoomMembers(data["players"]);
         }
         else if (data["message_type"] === "UNO_DRAW_ONE_RES") {
           setLastDrew(data["card"]);
@@ -95,6 +160,7 @@ function Room() {
         }
         else if (data["message_type"] === "UNO_GAMEOVER") {
           setWinner(data["winner"]);
+          setGameResult(data["result"])
           setGameStarted(false);
           setPrepared(false);
           cardPoolRef.current = [];
@@ -115,11 +181,14 @@ function Room() {
             let obj = data["object"] === userNameRef.current ? '你' : data["object"];
             let sbj = data["user_name"] === userNameRef.current ? '你' : data["user_name"];
             let text = `${sbj}对${obj}毫不留情地使用了+4`;
-            msg["content"] =
-              data["object"] === userNameRef.current ?
-                <span>{text}
-                  <button
-                    className='Room-suspect-button'
+            msg["content"] = text;
+
+            if (data["object"] === userNameRef.current) {
+              setHint(`${sbj}对你使用了+4 `);
+              setOptions(
+                <div>
+                  <Button
+                    size='large'
                     onClick={() => {
                       const roomId = searchParams.get("id");
                       socket.send(JSON.stringify({
@@ -127,10 +196,11 @@ function Room() {
                         "room_id": parseInt(roomId),
                         "user_name": userNameRef.current,
                       }));
+                      setOptions("");
                     }}
-                  >质疑</button>
-                  <button
-                    className='Room-suspect-button'
+                  >质疑</Button>
+                  <Button
+                    size='large'
                     onClick={() => {
                       const roomId = searchParams.get("id");
                       socket.send(JSON.stringify({
@@ -138,10 +208,12 @@ function Room() {
                         "room_id": parseInt(roomId),
                         "user_name": userNameRef.current,
                       }));
+                      setOptions("");
                     }}
-                  >忍痛接受</button>
-                </span> :
-                text;
+                  >忍痛接受</Button>
+                </div>
+              );
+            }
           }
           else if (data["type"] === "SUSPECT") {
             let sbj = data["user_name"] === userNameRef.current ? '你' : data["user_name"];
@@ -151,7 +223,7 @@ function Room() {
               `${sbj}质疑${obj}在有非黑牌可以打出的情况下仍然使用+4，但事实并非如此，${obj}确已无计可施。${sbj}反被罚牌6张`;
           }
           else if (data["type"] === "LESS_THAN_3_PEOPLE")
-            msg["content"] = "至少要3个人才能开始游戏，邀请好友一起来吧"
+            msg["content"] = "至少要3个人才能开始游戏，邀请好友一起来吧";
 
           chatMessagesRef.current.unshift(msg);
           setChatMessages(chatMessagesRef.current.slice());
@@ -168,12 +240,7 @@ function Room() {
   const searchParams = useSearchParams()[0];
 
   const handleJoinRoom = () => {
-    if (userName === null || userName === "")
-      messageApi.open({
-        type: "warning",
-        content: "请输入你的名字"
-      });
-    else if (password === null || password === "")
+    if (password === null || password === "")
       messageApi.open({
         type: "warning",
         content: "请输入密码"
@@ -182,11 +249,9 @@ function Room() {
       setNameInputConfirmLoading(true);
       const roomId = searchParams.get("id");
       let socket = socketRef.current;
-      //console.log("The room id is " + roomId + ".");
       socket.send(JSON.stringify({
         "message_type": "JOIN_ROOM",
         "room_id": parseInt(roomId),
-        "user_name": userName,
         "password": password
       }));
     }
@@ -205,11 +270,10 @@ function Room() {
       const roomId = searchParams.get("id");
       let socket = socketRef.current;
       socket.send(JSON.stringify({
-        "message_type": "SEND_MESSAGE",
+        "message_type": "CHAT_MESSAGE",
+        "room_id": parseInt(roomId),
         "message": {
           "type": "plain_text",
-          "room_id": parseInt(roomId),
-          "user_name": userName,
           "content": userMessage
         }
       }));
@@ -218,7 +282,6 @@ function Room() {
         socket.send(JSON.stringify({
           "message_type": "UNO_SAY_UNO",
           "room_id": parseInt(roomId),
-          "user_name": userName
         }));
     }
   };
@@ -227,11 +290,10 @@ function Room() {
     const roomId = searchParams.get("id");
     let socket = socketRef.current;
     socket.send(JSON.stringify({
-      "message_type": "SEND_MESSAGE",
+      "message_type": "CHAT_MESSAGE",
+      "room_id": parseInt(roomId),
       "message": {
         "type": "sticker",
-        "room_id": parseInt(roomId),
-        "user_name": userName,
         "sticker": stickerIdx
       }
     }));
@@ -244,9 +306,8 @@ function Room() {
     const roomId = searchParams.get("id");
 
     socket.send(JSON.stringify({
-      "message_type": "UNO_PREPARE",
+      "message_type": "GAME_PREPARE",
       "room_id": parseInt(roomId),
-      "user_name": userName,
       "prepare": prepared
     }));
   };
@@ -258,7 +319,6 @@ function Room() {
     socket.send(JSON.stringify({
       "message_type": "UNO_PLAY",
       "room_id": parseInt(roomId),
-      "user_name": userName,
       "card": card,
       "specified_color": color
     }));
@@ -271,7 +331,6 @@ function Room() {
     socket.send(JSON.stringify({
       "message_type": "UNO_DRAW_ONE",
       "room_id": parseInt(roomId),
-      "user_name": userName,
     }));
   }
 
@@ -287,7 +346,6 @@ function Room() {
     socket.send(JSON.stringify({
       "message_type": "UNO_SKIP_AFTER_DRAWING_ONE",
       "room_id": parseInt(roomId),
-      "user_name": userName,
     }));
   }
 
@@ -303,11 +361,6 @@ function Room() {
         onOk={handleJoinRoom}
         onCancel={() => navigate("/")}
       >
-        <span>名字</span>
-        <Input value={userName}
-          onChange={(e) => { setUserName(e.target.value); userNameRef.current = e.target.value; }}
-          placeholder="别人看到的你的名字"
-        />
         <span>密码</span>
         <Input value={password} onChange={(e) => setPassword(e.target.value)} placeholder="房间密码" />
       </Modal>
@@ -334,25 +387,6 @@ function Room() {
 
 
         <div className='Room-playerinfo-container'>
-          {
-            gameStarted ?
-              <div
-                className='Room-current-player-border'
-                style={{ top: roomMembers.findIndex((v) => v["name"] === gameInfo["next_player"]) * 34 - 2 }}
-              >
-                <div
-                  className='Room-current-player-arrow-container'
-                >
-                  <div
-                    style={{ transform: `rotate(${gameInfo["direction"] ? 0 : 180}deg)` }}
-                    className='Room-current-player-arrow'
-                  >
-
-                    <svg t="1709212867128" class="icon-arrow" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="8009" width="24" height="24"><path d="M517.689 796.444c-45.511 0-85.333-17.066-119.467-51.2L73.956 381.156C51.2 358.4 56.889 324.266 79.644 301.51c22.756-22.755 56.89-17.067 79.645 5.689l329.955 364.089c5.69 5.689 17.067 11.378 28.445 11.378s22.755-5.69 34.133-17.067l312.89-364.089c22.755-22.755 56.888-28.444 79.644-5.689 22.755 22.756 28.444 56.89 5.688 79.645L637.156 739.556c-28.445 39.822-68.267 56.888-119.467 56.888 5.689 0 0 0 0 0z" p-id="8010" fill="#ffffff"></path></svg>
-                  </div>
-                </div>
-              </div> : <></>
-          }
           {
             roomMembers.map((value, key) => (
               <PlayerStatus
@@ -417,6 +451,8 @@ function Room() {
                 <ChatMessage
                   key={key}
                   userName={value["user_name"]}
+                  avatarURL={value["user_name"] in avatarsURL ? avatarsURL[value["user_name"]] :
+                    'https://img-bsy.txrpic.com/preview/Element/00/00/88/59/E-885999-15265F377.png?imageMogr2/quality/90/thumbnail/320x%3E'}
                   message={value["content"]}
                   isSelf={value["user_name"] === userName}
                   isSticker={value["type"] === "sticker"}
@@ -437,14 +473,18 @@ function Room() {
               cardPool={cardPool}
               cardsInHand={cardsInHand}
               gameInfo={gameInfo}
+              players={gameInfo["players"]}
+              avatarsURL={avatarsURL}
               started={gameStarted}
               drawnOne={drawnOne}
               lastDrew={lastDrew}
               handlePlay={handlePlay}
               handleDrawOne={handleDrawOne}
               handleSkipAfterDrawingOne={handleSkipAfterDrawingOne}
+              hint={hint}
+              options={options}
             />
-            : <UnoGameResult winner={winner} />
+            : <UnoGameResult winner={winner} result={gameResult} avatarsURL={avatarsURL} />
         }
       </div>
 

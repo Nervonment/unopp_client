@@ -3,6 +3,10 @@ import Start from './Start';
 import Room from './Room';
 import './App.css'
 import { ConfigProvider, theme } from 'antd';
+import Login from './Login';
+import Register from './Register';
+import Self from './Self';
+import { themeColor } from './config';
 
 
 function App() {
@@ -14,7 +18,7 @@ function App() {
         theme={{
           algorithm: theme.darkAlgorithm,
           token: {
-            colorPrimary: "#f92667",
+            colorPrimary: themeColor,
             borderRadius: "20px"
           }
         }}
@@ -23,6 +27,9 @@ function App() {
           <Routes>
             <Route path="/" element={<Start />} />
             <Route path="/room" element={<Room />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/me" element={<Self />} />
           </Routes>
         </Router>
       </ConfigProvider>

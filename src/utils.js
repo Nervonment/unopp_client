@@ -1,13 +1,13 @@
-const server = 'http://127.0.0.1:2333/';
+import { server, httpPort } from "./config";
 
-let _csrfToken = null;
-async function getCSRFToken(refreshed = false) {
-    if (_csrfToken === null || refreshed) {
-        await get("csrf/")
-            .then((response) => _csrfToken = response.csrftoken)
-    }
-    return _csrfToken;
-}
+// let _csrfToken = null;
+// async function getCSRFToken(refreshed = false) {
+//     if (_csrfToken === null || refreshed) {
+//         await get("csrf/")
+//             .then((response) => _csrfToken = response.csrftoken)
+//     }
+//     return _csrfToken;
+// }
 
 function formatParams(params) {
     return Object.keys(params)
@@ -29,48 +29,55 @@ function convertToJSON(response) {
     }
 }
 
-async function get(url, params = {}) {
-    let fullPath = server + url;
+async function get(url, params = {}, asJSON = true) {
+    let fullPath = "http://" + server + ":" + httpPort + url;
     if (Object.keys(params).length !== 0) {
         fullPath += "?" + formatParams(params);
     }
-    const response = fetch(fullPath, {
-        method: "GET",
-        credentials: "include",
-        mode: "cors",
-    })
-        .then(convertToJSON)
-        .catch((error) => {
-            // give a useful error message
-            throw `GET request to ${url} failed with error:\n${error}`;
-        });
+    const response =
+        (asJSON ? (
+            fetch(fullPath, {
+                method: "GET",
+                credentials: "include",
+                mode: "cors",
+            })
+                .then(convertToJSON))
+            : fetch(fullPath, {
+                method: "GET",
+                credentials: "include",
+                mode: "cors",
+            }))
+            .catch((error) => {
+                // give a useful error message
+                throw `GET request to ${url} failed with error:\n${error}`;
+            });
     return response;
 }
 
 async function postStep(url, params = {}) {
-    return fetch(server + url, {
+    return fetch("http://" + server + ":" + httpPort + url, {
         method: "POST",
         body: JSON.stringify(params),
         credentials: "include",
         mode: "cors",
         headers: {
             "Content-Type": "application/json",
-            'X-CSRFToken': await getCSRFToken()
+            //   'X-CSRFToken': await getCSRFToken()
         }
     })
 }
 
 async function post(url, params = {}) {
-    async function checkCSRF(response) {
-        let newResponse = response
-        if (!response.ok && response.status === 403) {
-            newResponse = getCSRFToken(true)
-                .then(() => postStep(url, params));
-        }
-        return newResponse;
-    };
+    // async function checkCSRF(response) {
+    //     let newResponse = response
+    //     if (!response.ok && response.status === 403) {
+    //         newResponse = getCSRFToken(true)
+    //             .then(() => postStep(url, params));
+    //     }
+    //     return newResponse;
+    // };
     const response = postStep(url, params)
-        .then(checkCSRF)
+        //.then(checkCSRF)
         .then(convertToJSON)
         .catch((error) => {
             // give a useful error message
@@ -79,5 +86,29 @@ async function post(url, params = {}) {
     return response;
 }
 
+function getSessdata() {
+    let cookie = document.cookie;
+    let pos = cookie.indexOf("sessdata=") + 9;
+    let sessdata = parseInt(cookie.substring(pos));
+    return sessdata;
+}
 
-export { get, post };
+function getId() {
+    let cookie = document.cookie;
+    let pos = cookie.indexOf("id=") + 3;
+    let id = parseInt(cookie.substring(pos));
+    return id;
+}
+
+function getUserName() {
+    let cookie = document.cookie;
+    let pos = cookie.indexOf("user_name=") + 10;
+    let end = pos;
+    while (end < cookie.length && cookie[end] !== ';') 
+        end++;
+    let name = cookie.substring(pos, end);
+    return name;
+}
+
+
+export { get, post, getSessdata, getId, getUserName };

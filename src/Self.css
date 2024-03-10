@@ -1,0 +1,22 @@
+.Self{
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.Self-avatar{
+    width: 100px;
+    height: 100px;
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.Self > div {
+    display: flex;
+    flex-direction: column;
+    padding: 12px;
+    justify-content: flex-end;
+}

@@ -12,7 +12,7 @@ Math.seededRandom = function (max, min) {
   return min + rnd * (max - min);
 }
 
-let coords = [[300, 400, 0]];
+let coords = [[300 - 45, 400 - 30, 0]];
 for (let i = 0; i < 100; i++) {
   let angle = Math.seededRandom(0, 360);
   coords.push([
@@ -33,8 +33,8 @@ function UnoCardPool({ cards }) {
                 key={key}
                 className='UnoCardPool-card'
                 style={{
-                  top: `${coords[key % coords.length][0]}px`,
-                  left: `${coords[key % coords.length][1]}px`,
+                  top: `${coords[key % coords.length][0] / 6}%`,
+                  left: `${coords[key % coords.length][1] / 8}%`,
                   transform: `rotate(${coords[key][2]}deg)`
                 }}
               >

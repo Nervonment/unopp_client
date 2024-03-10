@@ -1,5 +1,7 @@
-//const server = "127.0.0.1";
-const server = "123.56.8.6";
-const port = "1145";
+const server = "localhost";
+const wsPort = "1145";
+const httpPort = "1146";
 
-export { server, port };
+const themeColor = "#f92667";
+
+export { server, wsPort, httpPort, themeColor };

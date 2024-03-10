@@ -1,14 +1,5 @@
 import { server, httpPort } from "./config";
 
-// let _csrfToken = null;
-// async function getCSRFToken(refreshed = false) {
-//     if (_csrfToken === null || refreshed) {
-//         await get("csrf/")
-//             .then((response) => _csrfToken = response.csrftoken)
-//     }
-//     return _csrfToken;
-// }
-
 function formatParams(params) {
     return Object.keys(params)
         .map((key) => key + "=" + encodeURIComponent(params[key]))
@@ -62,22 +53,12 @@ async function postStep(url, params = {}) {
         mode: "cors",
         headers: {
             "Content-Type": "application/json",
-            //   'X-CSRFToken': await getCSRFToken()
         }
     })
 }
 
 async function post(url, params = {}) {
-    // async function checkCSRF(response) {
-    //     let newResponse = response
-    //     if (!response.ok && response.status === 403) {
-    //         newResponse = getCSRFToken(true)
-    //             .then(() => postStep(url, params));
-    //     }
-    //     return newResponse;
-    // };
     const response = postStep(url, params)
-        //.then(checkCSRF)
         .then(convertToJSON)
         .catch((error) => {
             // give a useful error message

@@ -1,5 +1,5 @@
 {
-  "name": "unopp-server",
+  "name": "unopp-client",
   "version": "0.1.0",
   "private": true,
   "homepage": ".",
@@ -12,23 +12,19 @@
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
     "antd": "^5.14.2",
-    "electron-squirrel-startup": "^1.0.0",
     "js-md5": "^0.8.3",
     "rc-virtual-list": "^3.11.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.22.1",
     "react-scripts": "5.0.1",
-    "web-vitals": "^2.1.4"
+    "web-vitals": "^3.5.2"
   },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject",
-    "electron-start": "electron .",
-    "package": "electron-forge package",
-    "make": "electron-forge make"
+    "eject": "react-scripts eject"
   },
   "eslintConfig": {
     "extends": [
@@ -49,15 +45,6 @@
     ]
   },
   "devDependencies": {
-    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
-    "@electron-forge/cli": "^7.3.0",
-    "@electron-forge/maker-deb": "^7.3.0",
-    "@electron-forge/maker-rpm": "^7.3.0",
-    "@electron-forge/maker-squirrel": "^7.3.0",
-    "@electron-forge/maker-zip": "^7.3.0",
-    "@electron-forge/plugin-auto-unpack-natives": "^7.3.0",
-    "@electron-forge/plugin-fuses": "^7.3.0",
-    "@electron/fuses": "^1.7.0",
-    "electron": "^29.0.1"
+    "@babel/plugin-proposal-private-property-in-object": "^7.21.11"
   }
 }

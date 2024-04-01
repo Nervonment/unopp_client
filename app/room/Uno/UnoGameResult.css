@@ -1,0 +1,17 @@
+.UnoGameResult {
+    padding: 12px;
+    overflow: hidden;
+}
+
+.UnoGameResult-summary {
+    padding: 24px;
+    display: flex;
+    font-size: 28px;
+    align-items: center;
+    gap: 12px;
+}
+
+.UnoGameResult-cards {
+    display: flex;
+    gap: 1px;
+}

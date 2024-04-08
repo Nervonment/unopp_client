@@ -10,10 +10,10 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { useState } from "react"
+import { Badge } from "./badge"
 
 
-export function Nav({ links, isCollapsed }) {
-  const [selected, setSelected] = useState(0);
+export function Nav({ links, isCollapsed, selected, setSelected }) {
 
   return (
     <div
@@ -30,22 +30,22 @@ export function Nav({ links, isCollapsed }) {
                   onClick={() => setSelected(index)}
                   className={cn(
                     buttonVariants({ variant: index == selected ? 'default' : 'ghost', size: "icon" }),
-                    "h-9 w-9",
+                    "relative h-9 w-9",
                     index == selected &&
                     "dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white"
                   )}
                 >
                   <link.icon className="h-4 w-4" />
                   <span className="sr-only">{link.title}</span>
+                  {link.label ? (
+                    <Badge className="absolute right-[-4px] top-[-4px]">
+                      {link.label}
+                    </Badge>
+                  ) : <></>}
                 </Link>
               </TooltipTrigger>
               <TooltipContent side="right" className="flex items-center gap-4">
                 {link.title}
-                {link.label && (
-                  <span className="ml-auto text-muted-foreground">
-                    {link.label}
-                  </span>
-                )}
               </TooltipContent>
             </Tooltip>
           ) : (
@@ -63,15 +63,11 @@ export function Nav({ links, isCollapsed }) {
               <link.icon className="mr-2 h-4 w-4" />
               {link.title}
               {link.label && (
-                <span
-                  className={cn(
-                    "ml-auto",
-                    index == selected &&
-                    "text-background dark:text-white"
-                  )}
+                <Badge
+                  className="ml-auto"
                 >
                   {link.label}
-                </span>
+                </Badge>
               )}
             </Link>
           )

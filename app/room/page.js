@@ -13,20 +13,15 @@ import { server, wsPort } from "@/lib/config";
 import { message } from "antd";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getSessdata } from "@/lib/utils";
-import useUno from "@/lib/useUno";
-import useSplendor from "@/lib/useSplendor";
 import UnoGame from "./Uno/UnoGame";
 import SplendorGame from "./Splendor/SplendorGame";
 import GomokuGame from "./Gomoku/GomokuGame";
-export default function RoomPage({ params }) {
+export default function RoomPage() {
 
   const searchParams = useSearchParams();
   const roomId = searchParams.get("id");
 
   const [joinDialogOpen, setJoinDialogOpen] = useState(false);
-  // useEffect(() => {
-    // setJoinDialogOpen(false);
-  // }, []); // Prevent the Hydration Error
 
   const [roomPassword, setRoomPassword] = useState("");
   const [roomType, setRoomType] = useState("");
@@ -111,7 +106,7 @@ export default function RoomPage({ params }) {
       if (ws)
         ws.close();
     }
-  }, [roomId]);
+  }, [roomId, router]);
 
 
   const handleJoinRoom = () => {
@@ -210,6 +205,7 @@ export default function RoomPage({ params }) {
             className="w-full"
           >
             <ResizablePanel
+              defaultSize={36}
               minSize={24}
             >
               <div className="flex justify-between items-center h-12 py-2 px-4">
@@ -232,7 +228,8 @@ export default function RoomPage({ params }) {
             </ResizablePanel>
             <ResizableHandle />
             <ResizablePanel
-              minSize={36}
+              defaultSize={64}
+              minSize={40}
             >
               <Chat
                 chatMessages={chatMessages}
@@ -243,7 +240,9 @@ export default function RoomPage({ params }) {
           </ResizablePanelGroup>
         </ResizablePanel>
         <ResizableHandle />
-        <ResizablePanel>
+        <ResizablePanel
+          defaultSize={76}
+        >
           {
             roomType === "UNO" ?
               <UnoGame

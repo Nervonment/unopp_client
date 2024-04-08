@@ -75,7 +75,7 @@ export default function Chat({
                         onClick={() => {
                           setStickerOpen(false);
                           handleSendMessage({
-                            "type": "stiker",
+                            "type": "sticker",
                             "sticker": val
                           });
                         }}

@@ -4,17 +4,17 @@ import Chat from "@/app/room/Chat";
 import Avatar from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { server, wsPort } from "@/lib/config";
-import { cn, get, getId, getSessdata, getUserName, post, sendFriendRequest } from "@/lib/utils";
+import { cn, get, getId, getUserName, post, sendFriendRequest } from "@/lib/utils";
 import { message } from "antd";
 import { MessageSquareDashed, MessageSquareText, PlusCircle } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useContext, useEffect, useMemo, useRef, useState } from "react";
+import { WebSocketContext } from "../WebSocketContext";
+import { SetWhisperUnreadCountContext } from "../layout";
 
 
 export default function FriendsPage() {
@@ -56,20 +56,7 @@ export default function FriendsPage() {
     </div>
   );
 
-  const FriendRequestList = () => {
-    const [friendRequests, setFriendRequests] = useState([]);
-
-    useEffect(() => {
-      get('/get-friend-requests')
-        .then((response) => {
-          if (response === "FAILED")
-            message.warning("获取好友请求列表失败", 2);
-          else
-            setFriendRequests(response);
-        })
-        .catch(console.log);
-    }, []);
-
+  const FriendRequestList = ({ friendRequests }) => {
     const handleAcceptOrReject = (accept, id) => {
       post('/handle-friend-request', {
         "accept": accept,
@@ -122,7 +109,14 @@ export default function FriendsPage() {
   const [addFriendDialogOpen, setAddFriendDialogOpen] = useState(false);
   const [searchUserId, setSearchUserId] = useState();
   const [chatHistory, setChatHistory] = useState([]);
+  const [friendRequests, setFriendRequests] = useState([]);
   const [unreadCount, setUnreadCount] = useState({});
+  const totalUnreadCount = (() => {
+    let cnt = 0;
+    for (let key in unreadCount)
+      cnt += unreadCount[key];
+    return cnt;
+  })();
 
   const chatHistoryIdx =
     useMemo(() =>
@@ -130,9 +124,8 @@ export default function FriendsPage() {
         .map((val, idx) => ({ idx, time: val["messages"].length ? val["messages"][0]["timestamp"] : 0 }))
         .sort((a, b) => b.time - a.time), [chatHistory]);
 
-  const wsRef = useRef();
-
-  const router = useRouter();
+  const ws = useContext(WebSocketContext).current;
+  const setWhisperUnreadCount = useContext(SetWhisperUnreadCountContext);
 
   useEffect(() => {
     get("/get-friend-list")
@@ -167,63 +160,57 @@ export default function FriendsPage() {
           .catch(console.log);
       })
       .catch(console.log);
+  }, []);
 
+
+  useEffect(() => {
+    get('/get-friend-requests')
+      .then((response) => {
+        if (response === "FAILED")
+          message.warning("获取好友请求列表失败", 2);
+        else {
+          setFriendRequests(response);
+        }
+      })
+      .catch(console.log);
   }, []);
 
   useEffect(() => {
-    wsRef.current = new WebSocket(`ws://${server}:${wsPort}`);
-    let ws = wsRef.current;
+    const eventListener = (event) => {
+      const data = JSON.parse(event.data);
 
-    // 验证登录信息
-    ws.addEventListener(
-      "open",
-      (event) => {
-        ws.send(JSON.stringify({
-          "message_type": "AUTHORIZE",
-          "sessdata": getSessdata()
-        }));
-      }
-    );
+      if (data["message_type"] === "WHISPER_MESSAGE") {
+        const friendId = data["receiver_id"] === getId() ?
+          data["message"]["user_id"] : data["receiver_id"];
 
-    ws.addEventListener(
-      "message",
-      (event) => {
-        const data = JSON.parse(event.data);
+        setChatHistory((prev) => {
+          let after = prev.map(v => {
+            if (v["friend_id"] === friendId) {
+              let new_v = { ...v, "messages": v["messages"].slice() };
+              new_v["messages"].unshift(data["message"]);
+              return new_v;
+            }
+            else return { ...v };
+          });
+          return after;
+        });
 
-        if (data["message_type"] === "AUTHORIZE_RES") {
-          if (!data["success"]) {
-            message.warning('请登录', 2);
-            setTimeout(() => {
-              router.push("/login");
-            }, 1000);
-          }
-        }
-
-        else if (data["message_type"] === "WHISPER_MESSAGE") {
-          const friendId = data["receiver_id"] === getId() ?
-            data["message"]["user_id"] : data["receiver_id"];
-
-          setChatHistory((prev) => {
-            let after = prev.map(v => {
-              if (v["friend_id"] === friendId) {
-                let new_v = { ...v, "messages": v["messages"].slice() };
-                new_v["messages"].unshift(data["message"]);
-                return new_v;
-              }
-              else return { ...v };
-            });
+        if (friendId !== currentFriendIdRef.current) {
+          setUnreadCount(prev => {
+            let after = { ...prev };
+            after[`${friendId}`] += 1;
             return after;
           });
-
-          if (friendId !== currentFriendIdRef.current)
-            setUnreadCount(prev => {
-              let after = { ...prev };
-              after[`${friendId}`] += 1;
-              return after;
-            });
+          setWhisperUnreadCount(prev => prev + 1);
         }
       }
-    )
+    }
+
+    if (ws)
+      ws.addEventListener(
+        "message",
+        eventListener
+      );
 
     return () => {
       if (ws) {
@@ -232,12 +219,11 @@ export default function FriendsPage() {
             "message_type": "READ_WHISPER_MESSAGES",
             "friend_id": currentFriendIdRef.current,
           }));
-        } catch (e) {
-        };
-        ws.close();
+        } catch (e) { }
+        ws.removeEventListener("message", eventListener);
       }
     }
-  }, []);
+  }, [ws, setWhisperUnreadCount]);
 
   const handleAddFriend = () => {
     sendFriendRequest(
@@ -250,7 +236,7 @@ export default function FriendsPage() {
   };
 
   const handleSendMessage = (msg, receiverId) => {
-    wsRef.current.send(JSON.stringify({
+    ws.send(JSON.stringify({
       "message_type": "WHISPER_MESSAGE",
       "receiver_id": receiverId,
       "message": msg
@@ -259,11 +245,12 @@ export default function FriendsPage() {
 
   const handleReadMessage = (friendId) => {
     if (unreadCount[`${friendId}`])
-      wsRef.current.send(JSON.stringify({
+      ws.send(JSON.stringify({
         "message_type": "READ_WHISPER_MESSAGES",
         "friend_id": friendId,
       }));
     setUnreadCount(prev => {
+      setWhisperUnreadCount(prev1 => prev1 - prev[`${friendId}`]);
       prev[`${friendId}`] = 0;
       return { ...prev };
     });
@@ -293,8 +280,14 @@ export default function FriendsPage() {
   return (
     <Tabs defaultValue="chat" className="w-full h-full">
       <TabsList className="grid w-fit grid-cols-2 m-3">
-        <TabsTrigger value="chat">私信</TabsTrigger>
-        <TabsTrigger value="requests">好友请求</TabsTrigger>
+        <TabsTrigger value="chat">
+          私信
+          {totalUnreadCount ? <div className="w-2 h-2 rounded-full bg-primary mb-auto"></div> : <></>}
+        </TabsTrigger>
+        <TabsTrigger value="requests">
+          好友请求
+          {friendRequests.length ? <div className="w-2 h-2 rounded-full bg-primary mb-auto"></div> : <></>}
+        </TabsTrigger>
       </TabsList>
       <Separator />
       <TabsContent value="chat" className="h-[calc(100vh-65px)] m-0">
@@ -381,7 +374,7 @@ export default function FriendsPage() {
         </div>
       </TabsContent>
       <TabsContent value="requests" className="h-[calc(100vh-74px)]">
-        <FriendRequestList />
+        <FriendRequestList friendRequests={friendRequests} />
       </TabsContent>
     </Tabs>
   )

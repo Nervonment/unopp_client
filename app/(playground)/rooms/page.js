@@ -4,19 +4,19 @@ import { Separator } from "@/components/ui/separator"
 import RoomCard from "./RoomCard"
 import { Button } from "@/components/ui/button"
 import { CirclePlus } from "lucide-react"
-import { useEffect, useRef, useState } from "react"
-import { server, wsPort } from "@/lib/config"
+import { useContext, useEffect, useRef, useState } from "react"
 import { message } from "antd";
 import { useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { getSessdata, getUserName } from "@/lib/utils";
+import { getUserName } from "@/lib/utils";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { WebSocketContext } from "../WebSocketContext";
 
 export default function RoomsPage() {
 
-  const wsRef = useRef();
+  const ws = useContext(WebSocketContext).current;
   const router = useRouter();
 
   const roomIdRef = useRef();
@@ -28,57 +28,48 @@ export default function RoomsPage() {
   const [rooms, setRooms] = useState([]);
 
   useEffect(() => {
-    wsRef.current = new WebSocket(`ws://${server}:${wsPort}`);
-    let ws = wsRef.current;
-
-    // 验证登录信息
-    ws.addEventListener(
-      "open",
-      (event) => {
+    if (ws)
+      try {
         ws.send(JSON.stringify({
-          "message_type": "AUTHORIZE",
-          "sessdata": getSessdata()
+          "message_type": "GET_ROOM_LIST"
         }));
       }
-    );
+      catch (e) { }
 
-    ws.addEventListener(
-      "message",
-      (event) => {
-        const data = JSON.parse(event.data);
+    const eventListener = (event) => {
+      const data = JSON.parse(event.data);
 
-        if (data["message_type"] === "AUTHORIZE_RES") {
-          if (!data["success"]) {
-            message.warning('请登录', 2);
-            setTimeout(() => {
-              router.push("/login");
-            }, 1000);
-          }
-
-          else
-            ws.send(JSON.stringify({
-              "message_type": "GET_ROOM_LIST"
-            }));
-        }
-
-        else if (data["message_type"] === "ROOM_LIST") {
-          setRooms(data["room_list"]);
-        }
-
-        else if (data["message_type"] === "CREATE_ROOM_RES") {
-          if (data["success"])
-            router.push(`/room?id=${roomIdRef.current}`);
-          else
-            alert(data["info"]);
-        }
+      if (data["message_type"] === "AUTHORIZE_RES") {
+        if (data["success"])
+          ws.send(JSON.stringify({
+            "message_type": "GET_ROOM_LIST"
+          }));
       }
-    )
+
+      else if (data["message_type"] === "ROOM_LIST") {
+        setRooms(data["room_list"]);
+      }
+
+      else if (data["message_type"] === "CREATE_ROOM_RES") {
+        if (data["success"])
+          router.push(`/room?id=${roomIdRef.current}`);
+        else
+          alert(data["info"]);
+      }
+    };
+
+    if (ws) {
+      ws.addEventListener(
+        "message",
+        eventListener
+      );
+    }
 
     return () => {
       if (ws)
-        ws.close();
+        ws.removeEventListener("message", eventListener);
     }
-  }, []);
+  }, [ws, router]);
 
   const handleCreateRoom = () => {
     if (roomId === null || roomId === "")
@@ -88,7 +79,7 @@ export default function RoomsPage() {
     else if (roomType === "")
       message.warning("请选择游戏类型", 2);
     else {
-      wsRef.current.send(JSON.stringify({
+      ws.send(JSON.stringify({
         "message_type": "CREATE_ROOM",
         "room_id": parseInt(roomId),
         "room_name": roomName,

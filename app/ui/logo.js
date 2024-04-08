@@ -18,7 +18,6 @@ export default function Logo({ mini = false }) {
               <span className="text-primary">UNO</span>
               <span>++</span>
             </span>
-            <span className="text-muted-foreground text-xs">不止UNO</span>
           </>
           // <div className="bg-primary px-4 h-12 rounded-lg flex items-center">
           //   <span className="text-black text-2xl">UNO</span>

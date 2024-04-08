@@ -17,15 +17,16 @@ import useUno from "@/lib/useUno";
 import useSplendor from "@/lib/useSplendor";
 import UnoGame from "./Uno/UnoGame";
 import SplendorGame from "./Splendor/SplendorGame";
+import GomokuGame from "./Gomoku/GomokuGame";
 export default function RoomPage({ params }) {
 
   const searchParams = useSearchParams();
   const roomId = searchParams.get("id");
 
   const [joinDialogOpen, setJoinDialogOpen] = useState(false);
-  useEffect(() => {
-    setJoinDialogOpen(true);
-  }, []); // Prevent the Hydration Error
+  // useEffect(() => {
+    // setJoinDialogOpen(false);
+  // }, []); // Prevent the Hydration Error
 
   const [roomPassword, setRoomPassword] = useState("");
   const [roomType, setRoomType] = useState("");
@@ -36,6 +37,7 @@ export default function RoomPage({ params }) {
 
   const userNameRef = useRef();
   const wsRef = useRef();
+  const firstJoinRef = useRef(true);
 
   const router = useRouter();
 
@@ -62,6 +64,13 @@ export default function RoomPage({ params }) {
           if (data["success"]) {
             setUserName(data["user_name"]);
             userNameRef.current = data["user_name"];
+
+            // 尝试免密进入房间（第一次进入房间需要输入密码，之后不用）
+            wsRef.current.send(JSON.stringify({
+              "message_type": "JOIN_ROOM",
+              "room_id": parseInt(roomId),
+              "no_password": true,
+            }));
           }
           else {
             message.warning("请登录", 2);
@@ -80,8 +89,13 @@ export default function RoomPage({ params }) {
             setJoinDialogOpen(false);
             setRoomType(data["room_type"])
           }
-          else
+          else if (!firstJoinRef.current) {
             alert(data["info"]);
+          }
+          else {
+            setJoinDialogOpen(true);
+            firstJoinRef.current = false;
+          }
         }
 
         else if (data["message_type"] === "ROOM_MEMBERS_INFO")
@@ -97,7 +111,7 @@ export default function RoomPage({ params }) {
       if (ws)
         ws.close();
     }
-  }, []);
+  }, [roomId]);
 
 
   const handleJoinRoom = () => {
@@ -107,6 +121,7 @@ export default function RoomPage({ params }) {
       wsRef.current.send(JSON.stringify({
         "message_type": "JOIN_ROOM",
         "room_id": parseInt(roomId),
+        "no_password": false,
         "password": roomPassword
       }));
     }
@@ -166,7 +181,7 @@ export default function RoomPage({ params }) {
             </DialogHeader>
             <div className="flex flex-col gap-2">
               <Label>房间密码</Label>
-              <Input value={roomPassword} onChange={(e) => setRoomPassword(e.target.value)} type="password" placeholder="请输入房间密码" />
+              <Input value={roomPassword} onChange={(e) => setRoomPassword(e.target.value)} placeholder="请输入房间密码" />
             </div>
             <Button type="submit" onClick={handleJoinRoom}>加入</Button>
           </DialogContent>
@@ -247,7 +262,15 @@ export default function RoomPage({ params }) {
                   handleGameStart={handleGameStart}
                   handleGameOver={handleGameOver}
                 /> :
-                <></>
+                roomType === "GOMOKU" ?
+                  <GomokuGame
+                    ws={wsRef.current}
+                    pushChatMessage={pushChatMessage}
+                    gameStarted={gameStarted}
+                    handleGameStart={handleGameStart}
+                    handleGameOver={handleGameOver}
+                  /> :
+                  <></>
           }
         </ResizablePanel>
       </ResizablePanelGroup>

@@ -2,15 +2,18 @@ import useSplendor from "@/lib/useSplendor";
 import Coupon from "./Coupon";
 import Image from "next/image";
 import Ally from "./Ally";
-import { Avatar } from "antd";
-import { cn, getAvatarURL, getId } from "@/lib/utils";
+import { cn, getAvatarURL, getId, getUserName } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Check, Cross, X } from "lucide-react";
+import { Check, CircleUser, Cross, X } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import localFont from "next/font/local";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import Avatar from "@/components/ui/avatar";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 const minecraft = localFont({
   src: 'minecraft.ttf',
@@ -31,7 +34,7 @@ export default function SplendorGame({
     handleReturnMine
   } = useSplendor(ws, pushChatMessage, handleGameStart,
     useCallback(() => {
-      handleGameOver(); setIsFirstGame(false)
+      handleGameOver(); setIsFirstGame(false); setResultDialogOpen(true);
     }, [handleGameOver])
   );
 
@@ -39,6 +42,7 @@ export default function SplendorGame({
   const [isTaking2, setIsTaking2] = useState(false);
   const [minesChecked, setMinesChecked] = useState([false, false, false, false, false]);
   const [isFirstGame, setIsFirstGame] = useState(true);
+  const [resultDialogOpen, setResultDialogOpen] = useState(false);
 
   const isMyTurn = gameStarted ? gameInfo["player_info"]["status"] === "ACTION" : false;
 
@@ -88,7 +92,7 @@ export default function SplendorGame({
     )
   }
 
-  if (gameStarted)
+  if (gameStarted || !isFirstGame)
     return (
       <div className={cn("h-full w-full bg-splendor bg-cover relative", minecraft.className)}>
         <div className="h-[calc(100%-144px)] w-full flex justify-center items-center gap-8">
@@ -101,7 +105,8 @@ export default function SplendorGame({
                       className={cn(
                         val["status"] !== "WAITING" && "border-4 border-primary"
                       )}
-                      src={getAvatarURL(val["id"])}
+                      userId={val["id"]}
+                      userName={val["name"]}
                       size={56 + (val["status"] !== "WAITING" ? 8 : 0)}
                     />
                     <span className="text-lg">{val["reputation"]}</span>
@@ -110,6 +115,41 @@ export default function SplendorGame({
                     <span>
                       <span className={val["status"] !== "WAITING" && "text-primary font-bold"}>{val["name"]}</span>
                       &nbsp;
+                      {
+                        val["reserved_coupons"].length > 0 ?
+                          <TooltipProvider>
+                            <Tooltip openDelay={300}>
+                              <TooltipTrigger asChild>
+                                <span className="text-muted-foreground">
+                                  已预订
+                                  <span className="underline cursor-pointer">
+                                    {val["reserved_coupons"].length}个矿脉
+                                  </span>
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent
+                                side="top"
+                              >
+                                <div className="flex gap-1">
+                                  {
+                                    val["reserved_coupons"].map((val, idx) => (
+                                      <Coupon
+                                        key={idx}
+                                        costs={val["costs"]}
+                                        reputation={val["reputation"]}
+                                        type={val["type"]}
+                                        level={val["level"]}
+                                        bgImgIdx={val["idx"]}
+                                        backUp={false}
+                                        interactable={false}
+                                      />
+                                    ))
+                                  }
+                                </div>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider> : <></>
+                      }
                     </span>
                     <div className="flex">
                       {
@@ -319,7 +359,7 @@ export default function SplendorGame({
 
         <div className="absolute bottom-0 w-full">
           <div className="m-auto flex items-center gap-2 bg-[rgba(0,0,0,0.5)] p-4 rounded-t-md w-min h-[112px]">
-            <Avatar src={getAvatarURL(getId())} size={48} />
+            <Avatar userId={getId()} userName={getUserName()} size={48} />
             <span className="text-[32px] px-2">{gameInfo["player_info"]["reputation"]}</span>
             <Separator orientation="vertical" />
             <div>
@@ -376,33 +416,43 @@ export default function SplendorGame({
           </div>
         </div>
 
-
+        <Dialog
+          open={resultDialogOpen}
+          onOpenChange={setResultDialogOpen}
+        >
+          <DialogContent>
+            {
+              !isFirstGame ?
+                <div className="flex flex-col items-center justify-center w-full h-full">
+                  <Avatar userId={winner.id} userName={winner.name} size={72} />
+                  <h4>{winner.name}</h4>
+                  <span className='flex items-center gap-2 text-muted-foreground border-b-2 border-b-border mb-2 pb-2'>获得了胜利</span>
+                  <h6 className='text-center'>声望</h6>
+                  <ScrollArea className='max-h-[60%]'>
+                    <div className='flex flex-col items-start gap-2'>
+                      {
+                        gameInfo["players"].map((val, idx) => (
+                          <div key={idx} className='flex items-center gap-2'>
+                            <Avatar userId={val["id"]} userName={val["name"]} size={'large'} />
+                            <div>
+                              <span>{val["name"]}</span>
+                              <div className='flex h-12'>
+                                {val["reputation"]}
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      }
+                    </div>
+                  </ScrollArea>
+                </div> : <></>
+            }
+          </DialogContent>
+        </Dialog>
       </div>
     );
 
-  else if (!isFirstGame) return (
-    <div className="flex flex-col items-center justify-center w-full h-full">
-      <Avatar src={getAvatarURL(winner.id)} size={72} />
-      <h4>{winner.name}</h4>
-      <span className='flex items-center gap-2 text-muted-foreground border-b-2 border-b-border mb-2 pb-2'>获得了胜利</span>
-      <h6 className='text-center'>声望</h6>
-      <ScrollArea className='max-h-[60%]'>
-        <div className='flex flex-col items-start gap-2'>
-          {
-            gameInfo["players"].map((val, idx) => (
-              <div key={idx} className='flex items-center gap-2'>
-                <Avatar src={getAvatarURL(val["id"])} size={'large'} />
-                <div>
-                  <span>{val["name"]}</span>
-                  <div className='flex h-12'>
-                    {val["reputation"]}
-                  </div>
-                </div>
-              </div>
-            ))
-          }
-        </div>
-      </ScrollArea>
-    </div>
-  )
+  // else if (!isFirstGame) return (
+
+  // )
 }

@@ -132,6 +132,7 @@ export default function RoomsPage() {
                     <SelectGroup>
                       <SelectItem value="UNO">UNO</SelectItem>
                       <SelectItem value="SPLENDOR">璀璨宝石 (Minecraft Ver.)</SelectItem>
+                      <SelectItem value="GOMOKU">五子棋（无禁手）</SelectItem>
                     </SelectGroup>
                   </SelectContent>
                 </Select>
@@ -157,7 +158,6 @@ export default function RoomsPage() {
                 <input type="password" className="w-0 h-0 absolute left-[-1000px]" name="remembered" />
                 <Input
                   value={roomPassword} onChange={(e) => setRoomPassword(e.target.value)}
-                  type="password"
                   autoComplete="new-password"
                   placeholder="2~40个字符"
                 />
@@ -171,7 +171,11 @@ export default function RoomsPage() {
             key={idx}
             roomName={val["name"]}
             roomId={val["id"]}
-            roomType={val["type"] === "UNO" ? "UNO" : val["type"] === "SPLENDOR" ? "璀璨宝石 (Minecraft Ver.)" : ""}
+            roomType={
+              val["type"] === "UNO" ? "UNO" :
+                val["type"] === "SPLENDOR" ? "璀璨宝石 (Minecraft Ver.)" :
+                  val["type"] === "GOMOKU" ? "五子棋" :
+                    ""}
             ownerName={val["creator"]}
             numOfPeople={val["num_of_people"]}
             handleJoin={handleJoinRoom}

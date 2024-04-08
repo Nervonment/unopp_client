@@ -1,35 +1,64 @@
-"use client"
+import { get, getAvatarURL, sendFriendRequest } from "@/lib/utils"
+import { Avatar as AntdAvatar } from "antd"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./tooltip"
+import { useEffect, useState } from "react"
+import { Button } from "./button"
 
-import * as React from "react"
-import * as AvatarPrimitive from "@radix-ui/react-avatar"
+export default function Avatar({
+  userId, userName, showInfoOnHover = false, ...props
+}) {
+  const ProfileCard = ({ info }) => {
+    if (info)
+      return (
+        <div className="flex gap-2 items-center p-2">
+          <Avatar userId={info["id"]} userName={info["name"]} size={56} />
+          <div className="flex flex-col gap-1 items-start">
+            <span className="text-lg">{info["name"]}</span>
+            <span className="text-muted-foreground">{info["slogan"]}</span>
+          </div>
+          <Button onClick={() => sendFriendRequest(info["id"])}>添加好友</Button>
+        </div>
+      );
+    return <></>;
+  }
 
-import { cn } from "@/lib/utils"
+  const [info, setInfo] = useState();
 
-const Avatar = React.forwardRef(({ className, ...props }, ref) => (
-  <AvatarPrimitive.Root
-    ref={ref}
-    className={cn("relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full", className)}
-    {...props} />
-))
-Avatar.displayName = AvatarPrimitive.Root.displayName
+  useEffect(() => {
+    if (showInfoOnHover)
+      get("/get-user-info", { id: userId })
+        .then((response) => {
+          setInfo(response);
+        })
+        .catch(console.log);
+  }, [showInfoOnHover, userId]);
 
-const AvatarImage = React.forwardRef(({ className, ...props }, ref) => (
-  <AvatarPrimitive.Image
-    ref={ref}
-    className={cn("aspect-square h-full w-full", className)}
-    {...props} />
-))
-AvatarImage.displayName = AvatarPrimitive.Image.displayName
-
-const AvatarFallback = React.forwardRef(({ className, ...props }, ref) => (
-  <AvatarPrimitive.Fallback
-    ref={ref}
-    className={cn(
-      "flex h-full w-full items-center justify-center rounded-full bg-muted",
-      className
-    )}
-    {...props} />
-))
-AvatarFallback.displayName = AvatarPrimitive.Fallback.displayName
-
-export { Avatar, AvatarImage, AvatarFallback }
+  if (showInfoOnHover)
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger>
+            <AntdAvatar
+              src={getAvatarURL(userId)}
+              className="bg-border"
+              {...props}
+            >
+              {userName.substr(0, Math.min(userName.length, 2))}
+            </AntdAvatar>
+          </TooltipTrigger>
+          <TooltipContent>
+            <ProfileCard info={info} />
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  else return (
+    <AntdAvatar
+      src={getAvatarURL(userId)}
+      className="bg-border"
+      {...props}
+    >
+      {userName.substr(0, Math.min(userName.length, 2))}
+    </AntdAvatar>
+  );
+}

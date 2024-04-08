@@ -10,6 +10,7 @@ export default function Coupon({
   bgImgIdx,     // 背景图片索引
   backUp,       // 是否背面朝上
   reversable = true,
+  interactable = true,
   handleReserve,
   handleBuy,
 }) {
@@ -28,13 +29,13 @@ export default function Coupon({
       <div
         className={cn(
           "w-[80px] h-[120px] rounded-sm relative transition-all shadow-[0_10px_15px_-3px_rgb(0_0_0_/_0.6),0_4px_6px_-4px_rgb(0_0_0_/_0.6);] z-[5]",
-          onHover && "scale-110"
+          onHover && interactable && "scale-110"
         )}
         onMouseOver={onMouseOver}
         onMouseOut={onMouseOut}
       >
         {
-          onHover ? (
+          onHover && interactable ? (
             reversable ?
               <div className="w-[80px] h-[120px] absolute left-0 top-0 z-10">
                 <button

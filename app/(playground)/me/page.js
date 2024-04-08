@@ -1,22 +1,42 @@
 'use client';
 
+import Avatar from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { httpPort, server } from "@/lib/config";
-import { getAvatarURL, getId, getUserName, post, uploadDefaultAvatar } from "@/lib/utils";
+import { get, getAvatarURL, getId, getUserName, post, uploadDefaultAvatar } from "@/lib/utils";
 import { message } from "antd";
-import { LoaderCircle, LoaderIcon } from "lucide-react";
+import { LoaderIcon } from "lucide-react";
 import Image from "next/image";
-import { useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 
 export default function MePage() {
-  const [imageUrl, setImageUrl] = useState(getAvatarURL(getId()));
-  const [name, setName] = useState(getUserName());
+  const [id, setId] = useState();
+  const [imageUrl, setImageUrl] = useState('');
+  const [name, setName] = useState('');
+  const [slogan, setSlogan] = useState('');
+  const initialSloganRef = useRef();
   const [avatarFirstLoad, setAvatarFirstLoad] = useState(true);
   const avatarRef = useRef();
+  const router = useRouter();
+
+  useEffect(() => {
+    setId(getId());
+    setName(getUserName());
+    setImageUrl(getAvatarURL(getId()));
+    get("/get-user-info", { "id": getId() })
+      .then((response) => {
+        if (response) {
+          setSlogan(response["slogan"]);
+          initialSloganRef.current = response["slogan"];
+        }
+      })
+      .catch(console.log);
+  }, []);
 
   const handleChangeIcon = (e) => {
     if (e.target.files.length === 1) {
@@ -26,7 +46,7 @@ export default function MePage() {
       let reader = new FileReader();
       reader.onload = (e) => {
         setImageUrl(e.target.result);
-        console.log(e.target.result);
+        console.log("load icon");
       }
 
       reader.readAsDataURL(file);
@@ -46,6 +66,7 @@ export default function MePage() {
       context.clearRect(0, 0, 128, 128);
       context.drawImage(avatarRef.current, 0, 0, 128, 128);
 
+      console.log("upload icon");
       canvas.toBlob(
         (blob) => {
           const data = new FormData();
@@ -59,8 +80,12 @@ export default function MePage() {
             .then((response) => {
               response.text().then(
                 (text) => {
-                  if (text === "SUCCESS")
+                  if (text === "SUCCESS") {
                     message.success("头像上传成功", 2);
+                    setTimeout(() => {
+                      router.push("/me");
+                    }, 1000);
+                  }
                   else
                     message.error("头像上传失败", 2);
                 }
@@ -72,8 +97,8 @@ export default function MePage() {
     }
   }
 
-  const handleChangeName = () => {
-    if (name.indexOf(';') !== -1) 
+  const handleChangeProfile = () => {
+    if (name.indexOf(';') !== -1)
       message.warning("名字中不能包含\';\'", 2);
 
     if (name !== getUserName())
@@ -83,6 +108,16 @@ export default function MePage() {
             message.success("修改成功", 2);
           else if (response === "USERNAME_DUPLICATE")
             message.error("名字重复", 2);
+          else
+            message.error("修改失败", 2)
+        })
+        .catch((e) => console.log(e));
+
+    if (slogan !== initialSloganRef.current)
+      post('/set-slogan', { "slogan": slogan })
+        .then((response) => {
+          if (response === "SUCCESS")
+            message.success("修改成功", 2);
           else
             message.error("修改失败", 2)
         })
@@ -110,7 +145,7 @@ export default function MePage() {
               <div className="w-32 h-32 border-border border-2 hover:border-primary transition-colors rounded-full flex justify-center items-center relative">
                 {
                   imageUrl !== '' ?
-                    <img src={imageUrl} ref={avatarRef} onLoad={onAvatarLoad} height={128} width={128} style={{ borderRadius: "100px" }} alt='avatar' onError={uploadDefaultAvatar}/>
+                    <img src={imageUrl} ref={avatarRef} onLoad={onAvatarLoad} onError={() => setAvatarFirstLoad(false)} height={128} width={128} style={{ borderRadius: "100px" }} alt='avatar' />
                     : <LoaderIcon style={{ fontSize: "64px" }} />
                 }
 
@@ -121,17 +156,21 @@ export default function MePage() {
               上传头像
             </TooltipContent>
           </Tooltip>
-          
+
           <div className="flex gap-2 items-center">
             <div className="text-muted-foreground text-xs border-2 border-muted-foreground border-solid rounded-[6px] px-1 font-bold h-min">UID</div>
-            {getId()}
+            {id}
           </div>
         </div>
         <div className="flex flex-col items-start justify-start gap-1">
           <Label>名字</Label>
           <Input placeholder="2到40个字符" value={name} onChange={(e) => setName(e.target.value)} />
         </div>
-        <Button onClick={handleChangeName}>保存</Button>
+        <div className="flex flex-col items-start justify-start gap-1">
+          <Label>个性签名</Label>
+          <Input placeholder="40个字符以内" value={slogan} onChange={(e) => setSlogan(e.target.value)} />
+        </div>
+        <Button onClick={handleChangeProfile}>保存</Button>
       </div>
     </>
   )

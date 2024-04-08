@@ -4,7 +4,7 @@ import { Nav } from "@/components/ui/nav";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { Network, User } from "lucide-react";
+import { MessageSquareText, MessagesSquare, Network, User } from "lucide-react";
 import { useState } from "react";
 import Logo from "../ui/logo";
 import Link from "next/link";
@@ -58,6 +58,13 @@ export default function PlaygroundLayout({ children }) {
                     variant: 'ghost',
                     label: '',
                     href: '/me'
+                  },
+                  {
+                    title: "好友",
+                    icon: MessagesSquare,
+                    variant: 'ghost',
+                    label: '',
+                    href: '/friends'
                   }
                 ]}
               />

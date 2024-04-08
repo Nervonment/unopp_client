@@ -1,9 +1,11 @@
+import Avatar from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { host } from "@/lib/config";
-import { getAvatarURL, uploadDefaultAvatar } from "@/lib/utils";
-import { Avatar, message } from "antd";
+import { getAvatarURL } from "@/lib/utils";
+import { message } from "antd";
 import copy from "copy-to-clipboard";
-import { PlusCircle } from "lucide-react";
+import { CircleUser, PlusCircle, User } from "lucide-react";
+import { useEffect, useState } from "react";
 
 export default function PlayerList({
   players,
@@ -19,7 +21,7 @@ export default function PlayerList({
             className="w-full flex justify-between items-center px-4"
           >
             <div className="flex gap-1 items-center">
-              <Avatar src={getAvatarURL(val["id"])} size={30} onError={uploadDefaultAvatar} />
+              <Avatar userId={val["id"]} userName={val["name"]} size={30} showInfoOnHover={true} />
               <span>{val["name"]}</span>
               <span className="text-muted-foreground">{isSelf(val["name"]) ? "你" : ""}</span>
             </div>

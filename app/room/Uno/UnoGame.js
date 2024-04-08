@@ -6,6 +6,7 @@ import Players from './UnoPlayers';
 import { cn } from '@/lib/utils';
 import UnoGameResult from './UnoGameResult';
 import useUno from '@/lib/useUno';
+import Avatar from '@/components/ui/avatar';
 
 
 function UnoGame({
@@ -55,14 +56,14 @@ function UnoGame({
 
   const colorSelect = (card) => <ColorSelect card={card} />;
 
-  const PlayerInfo = ({ name, cardCount, isNext }) => {
+  const PlayerInfo = ({ name, id, cardCount, isNext }) => {
     return (
       <div className='flex flex-col items-center'>
         <div className={cn(
-          'rounded-full', 'text-lg', 'flex items-center justify-center', 'text-muted-foreground', 'font-bold',
+          'rounded-full', 'text-lg', 'flex items-center justify-center', 'text-muted-foreground',
           isNext ? 'w-14 h-14 border-[4px] border-primary' : 'w-12 h-12 border-none m-1'
         )}>
-          {name[0]}
+          <Avatar userId={id} userName={name} size={50} alt={name} />
           {/* <img src={avatarsURL[name]} width='54px' height='54px' style={{ borderRadius: "32px" }} alt='avatar' /> */}
         </div>
         <div className={isNext ? "color-primary font-bold w-20 text-center" : "w-20 text-center"}>
@@ -101,6 +102,7 @@ function UnoGame({
               gameInfo["players"].map((value, key) =>
                 <PlayerInfo
                   name={value["name"]}
+                  id={value["id"]}
                   cardCount={value["count"]}
                   isNext={value["name"] === gameInfo["next_player"]}
                   key={key}

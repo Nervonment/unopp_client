@@ -6,12 +6,11 @@ import { cn, getAvatarURL, getId, getUserName } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Check, CircleUser, Cross, X } from "lucide-react";
+import { Check, X } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import localFont from "next/font/local";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import Avatar from "@/components/ui/avatar";
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 

@@ -2,7 +2,6 @@
 
 import Avatar from "@/components/ui/avatar";
 import { cn, timestampToDateStr } from "@/lib/utils";
-import { CircleUser } from "lucide-react";
 import Image from "next/image";
 
 export default function ChatMessage({

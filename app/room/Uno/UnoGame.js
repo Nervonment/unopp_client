@@ -64,7 +64,6 @@ function UnoGame({
           isNext ? 'w-14 h-14 border-[4px] border-primary' : 'w-12 h-12 border-none m-1'
         )}>
           <Avatar userId={id} userName={name} size={50} alt={name} />
-          {/* <img src={avatarsURL[name]} width='54px' height='54px' style={{ borderRadius: "32px" }} alt='avatar' /> */}
         </div>
         <div className={isNext ? "color-primary font-bold w-20 text-center" : "w-20 text-center"}>
           {name.substr(0, 8) + (name.length > 8 ? "..." : "")}

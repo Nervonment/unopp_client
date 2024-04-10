@@ -4,12 +4,12 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import ChatMessage from "./ChatMessage"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Send, Smile } from "lucide-react"
+import { Smile } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import Image from "next/image"
 import { useRef, useState } from "react"
-import { getAvatarURL, timestampToDateStr } from "@/lib/utils";
+import { timestampToDateStr } from "@/lib/utils";
 
 const stickersIdx = [
   "1", "2", "3", "4", "5", "6", "7", "8", "9",

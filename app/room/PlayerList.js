@@ -1,11 +1,8 @@
 import Avatar from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { host } from "@/lib/config";
-import { getAvatarURL } from "@/lib/utils";
 import { message } from "antd";
 import copy from "copy-to-clipboard";
-import { CircleUser, PlusCircle, User } from "lucide-react";
-import { useEffect, useState } from "react";
+import { PlusCircle } from "lucide-react";
 
 export default function PlayerList({
   players,
@@ -45,7 +42,7 @@ export default function PlayerList({
             <Button
               variant="link"
               onClick={() => {
-                copy(`http://${host}/room?id=${roomId}`);
+                copy(window.location.href);
                 message.success("房间链接已复制到剪贴板");
               }}
             >

@@ -1,9 +1,7 @@
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import Logo from "../ui/logo";
 import { Josefin_Sans } from "next/font/google";
 import { cn } from "@/lib/utils";
-import Image from "next/image";
 
 const josefin = Josefin_Sans({ subsets: ['latin'] });
 

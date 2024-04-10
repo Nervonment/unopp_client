@@ -7,7 +7,7 @@ import { CirclePlus } from "lucide-react"
 import { useContext, useEffect, useRef, useState } from "react"
 import { message } from "antd";
 import { useRouter } from "next/navigation";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { getUserName } from "@/lib/utils";

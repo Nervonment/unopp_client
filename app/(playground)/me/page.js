@@ -1,16 +1,14 @@
 'use client';
 
-import Avatar from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { httpPort, server } from "@/lib/config";
-import { get, getAvatarURL, getId, getUserName, post, uploadDefaultAvatar } from "@/lib/utils";
+import { get, getAvatarURL, getId, getUserName, post } from "@/lib/utils";
 import { message } from "antd";
 import { LoaderIcon } from "lucide-react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
